@@ -1,0 +1,191 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Collections;
+using System.IO;
+
+namespace Savarankiska2
+{
+    class Studentas
+    {
+        private string pavarde, vardas, grupe;
+        private int pzkiek;
+        private ArrayList pz = new ArrayList();
+
+        public Studentas()
+        {
+
+        }
+        public Studentas(string pav, string va, string grupe, int pzkiek, ArrayList pz)
+        {
+            pavarde = pav;
+            vardas = va;
+            this.grupe = grupe;
+            this.pzkiek = pzkiek;
+            foreach (int sk in pz)
+                this.pz.Add(sk);
+        }
+        public string imtiPavarde()
+        {
+            return pavarde;
+        }
+        public string imtiVarda()
+        {
+            return vardas;
+        }
+        public string imtiGrupe()
+        {
+            return grupe;
+        }
+        public int imtiPzKiek()
+        {
+            return pzkiek;
+        }
+        public ArrayList imtiPz()
+        {
+            return pz;
+        }
+        public double imtiVidurki()
+        {
+            int suma = 0;
+            foreach (int pazymys in pz)
+            {
+                suma += pazymys;
+            }
+            return suma / pzkiek;
+        }
+        public static bool operator <=(Studentas st1, Studentas st2)
+        {
+            int g = String.Compare(st1.grupe, st2.grupe, StringComparison.CurrentCulture);
+            double p = st1.imtiVidurki() / st2.imtiVidurki();
+            return (g < 0 || g == 0 && p > 1);
+        }
+        public static bool operator >=(Studentas st1, Studentas st2)
+        {
+            int g = String.Compare(st1.grupe, st2.grupe, StringComparison.CurrentCulture);
+            return (g > 0);
+        }
+        public override string ToString()
+        {
+            string eilute;
+            eilute = string.Format("{0, -12} {1, -9} {2, -7}",
+                pavarde, vardas, grupe);
+            foreach (int sk in pz)
+            {
+                eilute = eilute + string.Format("{0,3:d}", sk);
+            }
+            return eilute;
+        }
+    }
+    class Fakultetas
+    {
+        private Studentas[] studentai;
+        private int n;
+
+        public Fakultetas()
+        {
+            n = 0;
+            studentai = new Studentas[100];
+        }
+        public int Imti()
+        {
+            return n;
+        }
+        public Studentas Imti(int i)
+        {
+            return studentai[i];
+        }
+        public void Deti(Studentas st)
+        {
+            studentai[n++] = st;
+        }
+        public void Rikiuoti()
+        {
+            for (int i = 0; i < n - 1; i++)
+            {
+                Studentas min = studentai[i];
+                int im = i;
+                for (int j = i + 1; j < n; j++)
+                {
+                    if (studentai[j] <= min)
+                    {
+                        min = studentai[j];
+                        im = j;
+                    }
+                }
+                studentai[im] = studentai[i];
+                studentai[i] = min;
+            }
+        }
+        public double vidurkis()
+        {
+            double vidurkis = 0;
+            double pzkiek = 0;
+            double suma = 0;
+            for (int i = 0; i < n; i++)
+            {
+                foreach (int pazymys in studentai[i].imtiPz())
+                {
+                    suma += pazymys;
+                }
+                pzkiek += studentai[i].imtiPzKiek();
+            }
+            vidurkis = suma / pzkiek;
+            return vidurkis;
+        }
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            const string df = "duom.txt";
+            string fakPav;
+            Fakultetas fak = new Fakultetas();
+            Skaityti(fak, df, out fakPav);
+            fak.Rikiuoti();
+            Spausdinti(fak, fakPav);
+        }
+        static void Skaityti(Fakultetas fak, string df, out string fakPav)
+        {
+            string line;
+            string[] parts;
+            string vardas;
+            string pavarde;
+            string grupe;
+            int pzkiek;
+            ArrayList pz = new ArrayList();
+            using (StreamReader reader = new StreamReader(df))
+            {
+                fakPav = reader.ReadLine();
+                while ((line = reader.ReadLine()) != null)
+                {
+                    parts = line.Split(';');
+                    pavarde = parts[0];
+                    vardas = parts[1];
+                    grupe = parts[2];
+                    pzkiek = int.Parse(parts[3]);
+                    string[] eil = parts[4].Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    pz.Clear();
+                    foreach (string eilute in eil)
+                    {
+                        int aa = int.Parse(eilute);
+                        pz.Add(aa);
+                    }
+                    Studentas st = new Studentas(pavarde, vardas, grupe, pzkiek, pz);
+                    fak.Deti(st);
+                }
+            }
+        }
+        static void Spausdinti(Fakultetas fak, string fakPav)
+        {
+            Console.WriteLine(fakPav);
+            Console.WriteLine("Vidurkis: {0:f2}", fak.vidurkis());
+            for (int i = 0; i < fak.Imti(); i++)
+            {
+                Console.WriteLine(fak.Imti(i).ToString());
+            }
+        }
+    }
+}
